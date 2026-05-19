@@ -633,57 +633,113 @@ legend {
   color: var(--ink);
 }
 
-.menu-head {
+.menu-hero {
+  position: relative;
+  min-height: 560px;
+  display: flex;
+  align-items: flex-end;
   padding: 80px 8vw 64px;
+  overflow: hidden;
+  border-bottom: 3px solid var(--ink);
+}
+.menu-hero-photo {
+  position: absolute;
+  inset: 0;
+  background: url('/photo-menu-hero.jpg') center/cover no-repeat;
+  z-index: 0;
+}
+.menu-hero-photo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(12, 58, 79, 0.35) 0%, rgba(12, 58, 79, 0.85) 100%),
+    radial-gradient(ellipse at 20% 80%, rgba(27, 107, 160, 0.45), transparent 60%);
+  mix-blend-mode: multiply;
+}
+.menu-hero-content {
+  position: relative;
+  z-index: 1;
   max-width: 1100px;
   margin: 0 auto;
+  width: 100%;
+  color: var(--cream);
 }
-.menu-head .menu-eyebrow {
+.menu-hero-eyebrow {
   font-family: var(--font-jetbrains-mono), monospace;
   font-size: 12px;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: var(--pool);
+  color: var(--chrome);
   display: inline-block;
   margin-bottom: 24px;
 }
-.menu-title {
+.menu-hero-title {
   font-family: var(--font-anton), sans-serif;
   font-size: clamp(48px, 8vw, 112px);
   line-height: 0.94;
   letter-spacing: -0.02em;
-  color: var(--ink);
   margin-bottom: 28px;
   max-width: 18ch;
 }
-.menu-title em {
-  color: var(--pool);
+.menu-hero-title em {
+  color: var(--chrome);
   font-style: normal;
 }
-.menu-lede {
+.menu-hero-lede {
   font-size: 18px;
   line-height: 1.55;
   max-width: 60ch;
   margin-bottom: 14px;
+  color: rgba(250, 243, 227, 0.92);
 }
-.menu-caveat {
+.menu-hero-caveat {
   font-family: var(--font-jetbrains-mono), monospace;
-  font-size: 12px;
-  letter-spacing: 0.08em;
+  font-size: 11px;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgba(10, 10, 10, 0.55);
-  max-width: 60ch;
+  color: rgba(250, 243, 227, 0.7);
+  max-width: 70ch;
 }
 
 .menu-section {
   padding: 72px 8vw;
   border-top: 3px solid var(--ink);
+  background-size: cover;
+  background-position: center;
+  position: relative;
 }
-.menu-section.tone-cream { background: var(--cream); color: var(--ink); }
-.menu-section.tone-beige { background: var(--beige); color: var(--ink); }
-.menu-section.tone-pool { background: var(--pool); color: var(--cream); }
-.menu-section.tone-chrome { background: var(--chrome); color: var(--ink); }
-.menu-section.tone-teal { background: var(--teal); color: var(--cream); }
+.menu-section.tone-cream { background-color: var(--cream); color: var(--ink); }
+.menu-section.tone-beige { background-color: var(--beige); color: var(--ink); }
+.menu-section.tone-pool { background-color: var(--pool); color: var(--cream); }
+.menu-section.tone-chrome { background-color: var(--chrome); color: var(--ink); }
+.menu-section.tone-teal { background-color: var(--teal); color: var(--cream); }
+
+.menu-section.has-photo::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.menu-section.tone-pool.has-photo::before {
+  background: linear-gradient(135deg, rgba(27, 107, 160, 0.72), rgba(12, 58, 79, 0.85));
+}
+.menu-section.tone-teal.has-photo::before {
+  background: linear-gradient(135deg, rgba(12, 58, 79, 0.84), rgba(10, 10, 10, 0.78));
+}
+.menu-section.tone-cream.has-photo::before {
+  background: linear-gradient(180deg, rgba(250, 243, 227, 0.78), rgba(232, 217, 188, 0.88));
+}
+.menu-section.tone-chrome.has-photo::before {
+  background: linear-gradient(135deg, rgba(242, 199, 68, 0.78), rgba(232, 217, 188, 0.85));
+}
+.menu-section.tone-beige.has-photo::before {
+  background: linear-gradient(135deg, rgba(232, 217, 188, 0.78), rgba(250, 243, 227, 0.85));
+}
+.menu-section-inner {
+  position: relative;
+  z-index: 1;
+}
 
 .menu-section-head {
   max-width: 1100px;
@@ -785,7 +841,7 @@ legend {
 }
 
 @media (max-width: 880px) {
-  .menu-head { padding: 56px 6vw 40px; }
+  .menu-hero { min-height: 440px; padding: 56px 6vw 40px; }
   .menu-section { padding: 56px 6vw; }
   .menu-section-head { grid-template-columns: 1fr; gap: 12px; }
   .menu-section-intro { grid-column: 1; }

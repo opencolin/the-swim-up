@@ -23,32 +23,40 @@ function MenuSection({
   intro,
   items,
   tone = "cream",
+  photo,
 }: {
   eyebrow: string;
   title: string;
   intro?: string;
   items: Item[];
   tone?: "cream" | "beige" | "pool" | "chrome" | "teal";
+  photo?: string;
 }) {
+  const style = photo ? { backgroundImage: `url(${photo})` } : undefined;
   return (
-    <section className={`menu-section tone-${tone}`}>
-      <header className="menu-section-head">
-        <span className="menu-eyebrow">{eyebrow}</span>
-        <h2 className="menu-section-title">{title}</h2>
-        {intro && <p className="menu-section-intro">{intro}</p>}
-      </header>
-      <ul className="menu-list">
-        {items.map((it, i) => (
-          <li key={i} className="menu-item">
-            <div className="menu-item-line">
-              <span className="menu-item-name">{it.name}</span>
-              <span className="menu-item-dots" aria-hidden />
-              {it.price && <span className="menu-item-price">{it.price}</span>}
-            </div>
-            {it.desc && <p className="menu-item-desc">{it.desc}</p>}
-          </li>
-        ))}
-      </ul>
+    <section
+      className={`menu-section tone-${tone}${photo ? " has-photo" : ""}`}
+      style={style}
+    >
+      <div className="menu-section-inner">
+        <header className="menu-section-head">
+          <span className="menu-eyebrow">{eyebrow}</span>
+          <h2 className="menu-section-title">{title}</h2>
+          {intro && <p className="menu-section-intro">{intro}</p>}
+        </header>
+        <ul className="menu-list">
+          {items.map((it, i) => (
+            <li key={i} className="menu-item">
+              <div className="menu-item-line">
+                <span className="menu-item-name">{it.name}</span>
+                <span className="menu-item-dots" aria-hidden />
+                {it.price && <span className="menu-item-price">{it.price}</span>}
+              </div>
+              {it.desc && <p className="menu-item-desc">{it.desc}</p>}
+            </li>
+          ))}
+        </ul>
+      </div>
     </section>
   );
 }
@@ -174,21 +182,24 @@ export default function MenuPage() {
       </div>
 
       <article className="menu-page">
-        <header className="menu-head">
-          <span className="menu-eyebrow">— Bar &amp; Kitchen —</span>
-          <h1 className="menu-title">
-            Six things done well,<br />
-            <em>not thirty done halfway.</em>
-          </h1>
-          <p className="menu-lede">
-            Breakfast through last call. The kitchen is short on its feet — the
-            menu changes when something better shows up at the market — but
-            these are the dishes we're always trying to be the best at.
-          </p>
-          <p className="menu-caveat">
-            Prices and selection illustrative. Final menu sets in spring.
-            Members eat in. Day-pass guests too.
-          </p>
+        <header className="menu-hero">
+          <div className="menu-hero-photo" aria-hidden="true" />
+          <div className="menu-hero-content">
+            <span className="menu-hero-eyebrow">— Bar &amp; Kitchen —</span>
+            <h1 className="menu-hero-title">
+              Six things done well,<br />
+              <em>not thirty done halfway.</em>
+            </h1>
+            <p className="menu-hero-lede">
+              Breakfast through last call. The kitchen is short on its feet —
+              the menu changes when something better shows up at the market —
+              but these are the dishes we're always trying to be the best at.
+            </p>
+            <p className="menu-hero-caveat">
+              Prices and selection illustrative · final menu sets in spring ·
+              members eat in · day-pass guests too
+            </p>
+          </div>
         </header>
 
         <MenuSection
@@ -213,6 +224,7 @@ export default function MenuPage() {
           intro="Small plates from the kitchen, delivered to your chair."
           items={poolDeck}
           tone="pool"
+          photo="/photo-pool-deck.jpg"
         />
 
         <MenuSection
@@ -221,6 +233,7 @@ export default function MenuPage() {
           intro="Wood-fired, slow, fewer choices, better execution."
           items={dinner}
           tone="cream"
+          photo="/photo-dinner.jpg"
         />
 
         <MenuSection
@@ -237,6 +250,7 @@ export default function MenuPage() {
           intro="Classics, executed properly. No froth, no foam, no flame."
           items={cocktailsBar}
           tone="teal"
+          photo="/photo-bar.jpg"
         />
 
         <MenuSection
