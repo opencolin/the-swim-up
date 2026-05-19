@@ -12,6 +12,7 @@ type Inputs = {
   includeFrontOffice: boolean;
   includeGarage: boolean;
   subleaseFrontOffice: boolean;
+  subleaseBack2nd: boolean;
   subleaseGarage: boolean;
   subleasePool: boolean;
   rentMainFloor: number;
@@ -20,6 +21,7 @@ type Inputs = {
   rentFrontOffice: number;
   rentGarage: number;
   subleaseFrontOfficeRent: number;
+  subleaseBack2ndRent: number;
   subleaseGarageRent: number;
   subleasePoolRent: number;
 
@@ -65,6 +67,7 @@ const DEFAULTS: Inputs = {
   includeFrontOffice: true,
   includeGarage: true,
   subleaseFrontOffice: true,
+  subleaseBack2nd: false,
   subleaseGarage: true,
   subleasePool: true,
   rentMainFloor: 7100,
@@ -73,6 +76,7 @@ const DEFAULTS: Inputs = {
   rentFrontOffice: 2500,
   rentGarage: 2500,
   subleaseFrontOfficeRent: 2500,
+  subleaseBack2ndRent: 2500,
   subleaseGarageRent: 2500,
   subleasePoolRent: 2200,
 
@@ -118,6 +122,7 @@ function compute(i: Inputs) {
     (i.includeFrontOffice && i.subleaseFrontOffice
       ? i.subleaseFrontOfficeRent
       : 0) +
+    (i.includeBack2nd && i.subleaseBack2nd ? i.subleaseBack2ndRent : 0) +
     (i.includeGarage && i.subleaseGarage ? i.subleaseGarageRent : 0) +
     (i.subleasePool ? i.subleasePoolRent : 0);
 
@@ -380,6 +385,13 @@ export function Calculator() {
               onChange={(v) => patch({ subleaseFrontOffice: v })}
               disabled={!inputs.includeFrontOffice}
               note={"+" + usd(inputs.subleaseFrontOfficeRent) + "/mo"}
+            />
+            <Toggle
+              label="Back 2nd floor — find a tenant (potential)"
+              checked={inputs.subleaseBack2nd}
+              onChange={(v) => patch({ subleaseBack2nd: v })}
+              disabled={!inputs.includeBack2nd}
+              note={"+" + usd(inputs.subleaseBack2ndRent) + "/mo"}
             />
             <Toggle
               label="Garage — existing tenant (lease ends Oct)"
