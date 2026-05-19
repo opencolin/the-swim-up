@@ -6,7 +6,7 @@ export default function Home() {
       <div className="strip">
         <div className="pair">
           <span>EST. MMXXVI</span>
-          <span>CITY HQ</span>
+          <span>SAN FRANCISCO</span>
         </div>
         <div className="pair">
           <a href="#work">Work</a>
@@ -141,7 +141,7 @@ export default function Home() {
       <footer className="footer">
         <span className="mark">THE SWIM UP</span>
         <span>Pool · Bar · Desk · 2026</span>
-        <span>City · Always Heated</span>
+        <span>San Francisco · Always Heated</span>
       </footer>
     </>
   );
