@@ -6,13 +6,17 @@ import { useMemo, useState } from "react";
 
 type Inputs = {
   // Lease
-  includeMain: boolean;
+  includeMainFloor: boolean;
+  includePool: boolean;
+  includeBack2nd: boolean;
   includeFrontOffice: boolean;
   includeGarage: boolean;
   subleaseFrontOffice: boolean;
   subleaseGarage: boolean;
   subleasePool: boolean;
-  rentMain: number;
+  rentMainFloor: number;
+  rentPool: number;
+  rentBack2nd: number;
   rentFrontOffice: number;
   rentGarage: number;
   subleaseFrontOfficeRent: number;
@@ -53,13 +57,19 @@ type Inputs = {
 };
 
 const DEFAULTS: Inputs = {
-  includeMain: true,
+  // The "$15k for the remaining space" bundle from the landlord, split
+  // proportionally by sq ft (2000 + 1500 + 725 = 4225 → $3.55/sq ft).
+  includeMainFloor: true,
+  includePool: true,
+  includeBack2nd: true,
   includeFrontOffice: true,
   includeGarage: true,
   subleaseFrontOffice: true,
   subleaseGarage: true,
   subleasePool: true,
-  rentMain: 15000,
+  rentMainFloor: 7100,
+  rentPool: 5325,
+  rentBack2nd: 2575,
   rentFrontOffice: 2495,
   rentGarage: 2350,
   subleaseFrontOfficeRent: 2495,
@@ -98,7 +108,9 @@ type Output = ReturnType<typeof compute>;
 function compute(i: Inputs) {
   // --- Rent ---
   const grossRent =
-    (i.includeMain ? i.rentMain : 0) +
+    (i.includeMainFloor ? i.rentMainFloor : 0) +
+    (i.includePool ? i.rentPool : 0) +
+    (i.includeBack2nd ? i.rentBack2nd : 0) +
     (i.includeFrontOffice ? i.rentFrontOffice : 0) +
     (i.includeGarage ? i.rentGarage : 0);
 
@@ -232,7 +244,9 @@ const SCENARIOS = {
   A: {
     name: "A — Whole building, keep both subs",
     patch: {
-      includeMain: true,
+      includeMainFloor: true,
+      includePool: true,
+      includeBack2nd: true,
       includeFrontOffice: true,
       includeGarage: true,
       subleaseFrontOffice: true,
@@ -243,7 +257,9 @@ const SCENARIOS = {
   B: {
     name: "B — Whole building + pool sublease (off-peak)",
     patch: {
-      includeMain: true,
+      includeMainFloor: true,
+      includePool: true,
+      includeBack2nd: true,
       includeFrontOffice: true,
       includeGarage: true,
       subleaseFrontOffice: true,
@@ -254,7 +270,9 @@ const SCENARIOS = {
   C: {
     name: "C — Whole building, full operational control",
     patch: {
-      includeMain: true,
+      includeMainFloor: true,
+      includePool: true,
+      includeBack2nd: true,
       includeFrontOffice: true,
       includeGarage: true,
       subleaseFrontOffice: false,
@@ -265,7 +283,9 @@ const SCENARIOS = {
   D: {
     name: "D — Skip garage",
     patch: {
-      includeMain: true,
+      includeMainFloor: true,
+      includePool: true,
+      includeBack2nd: true,
       includeFrontOffice: true,
       includeGarage: false,
       subleaseFrontOffice: true,
@@ -276,7 +296,9 @@ const SCENARIOS = {
   E: {
     name: "E — Core only (skip front office + garage)",
     patch: {
-      includeMain: true,
+      includeMainFloor: true,
+      includePool: true,
+      includeBack2nd: true,
       includeFrontOffice: false,
       includeGarage: false,
       subleaseFrontOffice: false,
@@ -319,19 +341,31 @@ export function Calculator() {
           <fieldset>
             <legend>Spaces taken</legend>
             <Toggle
-              label="Main floor + pool + back 2nd floor"
-              checked={inputs.includeMain}
-              onChange={(v) => patch({ includeMain: v })}
-              note={usd(inputs.rentMain) + "/mo"}
+              label="Main floor · 2,000 sq ft"
+              checked={inputs.includeMainFloor}
+              onChange={(v) => patch({ includeMainFloor: v })}
+              note={usd(inputs.rentMainFloor) + "/mo"}
             />
             <Toggle
-              label="Front 2nd floor office"
+              label="Pool area · 1,500 sq ft"
+              checked={inputs.includePool}
+              onChange={(v) => patch({ includePool: v })}
+              note={usd(inputs.rentPool) + "/mo"}
+            />
+            <Toggle
+              label="Back 2nd floor · 725 sq ft"
+              checked={inputs.includeBack2nd}
+              onChange={(v) => patch({ includeBack2nd: v })}
+              note={usd(inputs.rentBack2nd) + "/mo"}
+            />
+            <Toggle
+              label="Front 2nd floor office · 625 sq ft"
               checked={inputs.includeFrontOffice}
               onChange={(v) => patch({ includeFrontOffice: v })}
               note={usd(inputs.rentFrontOffice) + "/mo"}
             />
             <Toggle
-              label="Garage"
+              label="Garage · 500 sq ft"
               checked={inputs.includeGarage}
               onChange={(v) => patch({ includeGarage: v })}
               note={usd(inputs.rentGarage) + "/mo"}
