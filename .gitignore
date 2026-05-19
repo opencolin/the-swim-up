@@ -45,3 +45,7 @@ next-env.d.ts
 .idea/
 .vscode/
 .env*.local
+.gstack/
+
+# source originals (renamed assets live in /public)
+/photos/

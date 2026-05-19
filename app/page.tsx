@@ -11,7 +11,7 @@ export default function Home() {
         <div className="pair">
           <a href="#work">Work</a>
           <a href="/menu">Menu</a>
-          <a href="#swim">Swim</a>
+          <a href="#space">Space</a>
           <a href="#inquire">Members</a>
         </div>
       </div>
@@ -130,6 +130,66 @@ export default function Home() {
           <em>pool.</em>
         </blockquote>
         <div className="attrib">— Founders</div>
+      </section>
+
+      <section className="space" id="space">
+        <header className="space-head">
+          <span className="eyebrow">— The Space —</span>
+          <h2>
+            FOUR ROOMS.<br />
+            <em>One front door.</em>
+          </h2>
+        </header>
+        <div className="space-grid">
+          <figure className="space-photo big">
+            <div
+              className="space-photo-img"
+              style={{ backgroundImage: "url('/photo-storefront.png')" }}
+              aria-hidden="true"
+            />
+            <figcaption>
+              <span className="cap-num">01</span>
+              <span className="cap-name">The Front Door</span>
+              <span className="cap-meta">584 4th St · San Francisco</span>
+            </figcaption>
+          </figure>
+          <figure className="space-photo">
+            <div
+              className="space-photo-img"
+              style={{ backgroundImage: "url('/photo-pool.png')" }}
+              aria-hidden="true"
+            />
+            <figcaption>
+              <span className="cap-num">02</span>
+              <span className="cap-name">The Pool</span>
+              <span className="cap-meta">Heated · 25m · Year-round</span>
+            </figcaption>
+          </figure>
+          <figure className="space-photo">
+            <div
+              className="space-photo-img"
+              style={{ backgroundImage: "url('/photo-work-library.png')" }}
+              aria-hidden="true"
+            />
+            <figcaption>
+              <span className="cap-num">03</span>
+              <span className="cap-name">The Library</span>
+              <span className="cap-meta">Long desks · Quiet hours</span>
+            </figcaption>
+          </figure>
+          <figure className="space-photo">
+            <div
+              className="space-photo-img"
+              style={{ backgroundImage: "url('/photo-work-desks.png')" }}
+              aria-hidden="true"
+            />
+            <figcaption>
+              <span className="cap-num">04</span>
+              <span className="cap-name">The Floor</span>
+              <span className="cap-meta">Hot desks · Phone rooms</span>
+            </figcaption>
+          </figure>
+        </div>
       </section>
 
       <section className="cta-band" id="inquire">
