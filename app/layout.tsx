@@ -2,6 +2,19 @@ import type { Metadata, Viewport } from "next";
 import { Anton, DM_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
+function resolveMetadataBase(): URL {
+  const rawUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    process.env.SITE_URL ??
+    "http://localhost:3000";
+
+  try {
+    return new URL(rawUrl);
+  } catch {
+    return new URL("http://localhost:3000");
+  }
+}
+
 const anton = Anton({
   weight: "400",
   variable: "--font-anton",
@@ -23,6 +36,7 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: resolveMetadataBase(),
   title: "The Swim Up — pool · bar · desk",
   description:
     "A members' club where work meets water. Heated pool, the kitchen open from breakfast to last call, and a desk to call your own.",
