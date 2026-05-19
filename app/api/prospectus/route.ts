@@ -37,7 +37,31 @@ export async function GET() {
   }
 }
 
+function checkEditToken(req: Request): boolean {
+  const expected = process.env.PROSPECTUS_EDIT_TOKEN;
+  if (!expected) {
+    // No edit token configured = no one can edit
+    return false;
+  }
+  const provided = req.headers.get("x-edit-token");
+  if (!provided) return false;
+  // Constant-time compare so timing leaks don't help an attacker
+  if (provided.length !== expected.length) return false;
+  let diff = 0;
+  for (let i = 0; i < provided.length; i++) {
+    diff |= provided.charCodeAt(i) ^ expected.charCodeAt(i);
+  }
+  return diff === 0;
+}
+
 export async function POST(req: Request) {
+  if (!checkEditToken(req)) {
+    return Response.json(
+      { ok: false, error: "forbidden" },
+      { status: 403 },
+    );
+  }
+
   let token: string;
   try {
     token = getToken();

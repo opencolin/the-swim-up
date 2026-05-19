@@ -341,31 +341,64 @@ const SCENARIOS = {
 
 /* ---------- UI ---------- */
 
-type SyncStatus = "idle" | "loading" | "syncing" | "saved" | "offline";
+const EDIT_TOKEN_KEY = "swim-up-prospectus-edit-token-v1";
+
+type SyncStatus = "loading" | "idle" | "syncing" | "saved" | "offline";
+
+function readEditToken(): string | null {
+  try {
+    return localStorage.getItem(EDIT_TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
 
 export function Calculator() {
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
   const [hydrated, setHydrated] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [hasLocalTweaks, setHasLocalTweaks] = useState(false);
   const [shareStatus, setShareStatus] = useState<"idle" | "copied" | "err">(
     "idle",
   );
   const [syncStatus, setSyncStatus] = useState<SyncStatus>("loading");
   const isFrozenScenario = useRef(false);
+  const canonicalRef = useRef<Partial<Inputs> | null>(null);
   const o: Output = useMemo(() => compute(inputs), [inputs]);
 
   function patch(p: Partial<Inputs>) {
     setInputs((s) => ({ ...s, ...p }));
   }
 
-  // Load saved state on mount:
-  //   1. URL ?s= takes precedence (frozen scenario, no cloud save)
-  //   2. Cloud (cross-device shared state)
-  //   3. localStorage (legacy fallback / migration)
-  //   4. Defaults
+  // On mount: handle ?edit= token, then load state in priority order.
+  //   1. URL ?s= → frozen scenario (read-only display, no cloud or local save)
+  //   2. In edit mode → cloud canonical; changes write to cloud
+  //   3. In view mode → cloud canonical, overlaid with local visitor snapshot
   useEffect(() => {
     let cancelled = false;
 
     async function load() {
+      // Capture ?edit=TOKEN, store it, strip from URL so it doesn't get shared
+      try {
+        const url = new URL(window.location.href);
+        const editParam = url.searchParams.get("edit");
+        if (editParam) {
+          try {
+            localStorage.setItem(EDIT_TOKEN_KEY, editParam);
+          } catch {
+            // ignore
+          }
+          url.searchParams.delete("edit");
+          window.history.replaceState(null, "", url.toString());
+        }
+      } catch {
+        // ignore
+      }
+
+      const tokenPresent = !!readEditToken();
+      if (!cancelled) setEditMode(tokenPresent);
+
+      // Check ?s= frozen scenario — takes precedence over everything
       let urlState: Partial<Inputs> | null = null;
       try {
         const params = new URLSearchParams(window.location.search);
@@ -376,7 +409,6 @@ export function Calculator() {
       }
 
       if (urlState) {
-        // Frozen scenario — don't sync to cloud or overwrite the shared state.
         isFrozenScenario.current = true;
         if (!cancelled) {
           setInputs((s) => ({ ...s, ...urlState! }));
@@ -386,37 +418,51 @@ export function Calculator() {
         return;
       }
 
-      // Try cloud
+      // Fetch canonical from cloud
+      let canonical: Partial<Inputs> | null = null;
       try {
         const res = await fetch("/api/prospectus", { cache: "no-store" });
         if (res.ok) {
           const cloud = await res.json();
-          if (cloud && typeof cloud === "object" && !cancelled) {
-            setInputs((s) => ({ ...s, ...cloud }));
-            setSyncStatus("saved");
-            setHydrated(true);
-            return;
+          if (cloud && typeof cloud === "object") {
+            canonical = cloud as Partial<Inputs>;
           }
         }
       } catch {
-        // network error — fall through to localStorage
+        // network error — canonical stays null, we'll fall back to defaults
       }
+      canonicalRef.current = canonical;
 
-      // Fall back to localStorage
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw && !cancelled) {
-          const parsed = JSON.parse(raw);
-          if (parsed && typeof parsed === "object") {
-            setInputs((s) => ({ ...s, ...parsed }));
-          }
+      if (tokenPresent) {
+        // Edit mode: canonical is what we display. No local overlay.
+        if (canonical && !cancelled) {
+          setInputs((s) => ({ ...s, ...canonical! }));
         }
-      } catch {
-        // ignore
-      }
-      if (!cancelled) {
-        setSyncStatus("idle");
-        setHydrated(true);
+        if (!cancelled) {
+          setSyncStatus(canonical ? "saved" : "idle");
+          setHydrated(true);
+        }
+      } else {
+        // View mode: canonical as base, overlaid with this visitor's snapshot.
+        let visitor: Partial<Inputs> | null = null;
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed && typeof parsed === "object") {
+              visitor = parsed as Partial<Inputs>;
+            }
+          }
+        } catch {
+          // ignore
+        }
+        if (!cancelled) {
+          const merged: Partial<Inputs> = { ...(canonical ?? {}), ...(visitor ?? {}) };
+          setInputs((s) => ({ ...s, ...merged }));
+          setHasLocalTweaks(!!visitor);
+          setSyncStatus("idle");
+          setHydrated(true);
+        }
       }
     }
 
@@ -426,63 +472,70 @@ export function Calculator() {
     };
   }, []);
 
-  // Cache to localStorage on every change (fast path; survives offline).
-  useEffect(() => {
-    if (!hydrated) return;
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(inputs));
-    } catch {
-      // ignore quota/privacy errors
-    }
-  }, [inputs, hydrated]);
-
-  // Sync to cloud on every change (debounced). Skip in frozen-scenario mode.
-  const cloudTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Save on change. Behavior depends on mode.
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!hydrated || isFrozenScenario.current) return;
-    if (cloudTimer.current) clearTimeout(cloudTimer.current);
-    cloudTimer.current = setTimeout(async () => {
-      setSyncStatus("syncing");
-      try {
-        const res = await fetch("/api/prospectus", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify(inputs),
-        });
-        setSyncStatus(res.ok ? "saved" : "offline");
-      } catch {
-        setSyncStatus("offline");
-      }
-    }, 800);
-    return () => {
-      if (cloudTimer.current) clearTimeout(cloudTimer.current);
-    };
-  }, [inputs, hydrated]);
+    if (saveTimer.current) clearTimeout(saveTimer.current);
 
-  // Mirror state to the URL search param (debounced) so links are shareable.
-  const urlTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
-    if (!hydrated) return;
-    if (urlTimer.current) clearTimeout(urlTimer.current);
-    urlTimer.current = setTimeout(() => {
-      try {
-        const encoded = encodeState(inputs);
-        const url = new URL(window.location.href);
-        if (encoded) url.searchParams.set("s", encoded);
-        else url.searchParams.delete("s");
-        window.history.replaceState(null, "", url.toString());
-      } catch {
-        // ignore
-      }
-    }, 500);
+    if (editMode) {
+      // Edit mode: debounced POST to cloud
+      saveTimer.current = setTimeout(async () => {
+        setSyncStatus("syncing");
+        const token = readEditToken();
+        try {
+          const res = await fetch("/api/prospectus", {
+            method: "POST",
+            headers: {
+              "content-type": "application/json",
+              "x-edit-token": token || "",
+            },
+            body: JSON.stringify(inputs),
+          });
+          if (res.status === 403) {
+            // Token rejected — drop it, downgrade to view mode
+            try {
+              localStorage.removeItem(EDIT_TOKEN_KEY);
+            } catch {
+              // ignore
+            }
+            setEditMode(false);
+            setSyncStatus("offline");
+          } else {
+            setSyncStatus(res.ok ? "saved" : "offline");
+          }
+        } catch {
+          setSyncStatus("offline");
+        }
+      }, 800);
+    } else {
+      // View mode: save to localStorage as visitor's per-browser snapshot
+      saveTimer.current = setTimeout(() => {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(inputs));
+          setHasLocalTweaks(true);
+          setSyncStatus("saved");
+        } catch {
+          setSyncStatus("offline");
+        }
+      }, 300);
+    }
+
     return () => {
-      if (urlTimer.current) clearTimeout(urlTimer.current);
+      if (saveTimer.current) clearTimeout(saveTimer.current);
     };
-  }, [inputs, hydrated]);
+  }, [inputs, hydrated, editMode]);
 
   async function copyShareLink() {
     try {
-      await navigator.clipboard.writeText(window.location.href);
+      // Build a fresh URL encoding the CURRENT state so the link works for
+      // anyone, regardless of what the canonical is at the time.
+      const url = new URL(window.location.href);
+      const encoded = encodeState(inputs);
+      if (encoded) url.searchParams.set("s", encoded);
+      else url.searchParams.delete("s");
+      url.searchParams.delete("edit"); // never share the edit token
+      await navigator.clipboard.writeText(url.toString());
       setShareStatus("copied");
       setTimeout(() => setShareStatus("idle"), 1800);
     } catch {
@@ -491,20 +544,37 @@ export function Calculator() {
     }
   }
 
-  function resetAll() {
-    setInputs(DEFAULTS);
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch {
-      // ignore
+  async function resetAll() {
+    if (isFrozenScenario.current) {
+      setInputs(DEFAULTS);
+      return;
     }
-    // Also clear cloud state by POSTing defaults
-    if (!isFrozenScenario.current) {
-      fetch("/api/prospectus", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(DEFAULTS),
-      }).catch(() => {});
+    if (editMode) {
+      // Push DEFAULTS as the new canonical
+      setInputs(DEFAULTS);
+      const token = readEditToken();
+      try {
+        await fetch("/api/prospectus", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-edit-token": token || "",
+          },
+          body: JSON.stringify(DEFAULTS),
+        });
+      } catch {
+        // ignore
+      }
+    } else {
+      // View mode: drop visitor's local snapshot, revert to canonical
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch {
+        // ignore
+      }
+      setHasLocalTweaks(false);
+      const canonical = canonicalRef.current;
+      setInputs({ ...DEFAULTS, ...(canonical ?? {}) });
     }
   }
 
@@ -911,16 +981,16 @@ export function Calculator() {
           {!hydrated
             ? ""
             : isFrozenScenario.current
-              ? "Frozen scenario from share link · changes won't save"
-              : syncStatus === "loading"
-                ? "Loading saved state…"
-                : syncStatus === "syncing"
-                  ? "Syncing…"
-                  : syncStatus === "saved"
-                    ? "Saved · synced across devices"
-                    : syncStatus === "offline"
-                      ? "Offline · changes cached locally"
-                      : "Synced across devices"}
+              ? "Frozen scenario from share link · tweaks won't save"
+              : editMode
+                ? syncStatus === "syncing"
+                  ? "Editing canonical · syncing…"
+                  : syncStatus === "offline"
+                    ? "Editing canonical · offline (will retry)"
+                    : "Editing canonical · saved across your devices"
+                : hasLocalTweaks
+                  ? "Tweaking locally · the published model is unchanged"
+                  : "Showing the published numbers"}
         </span>
         <button type="button" className="reset-btn" onClick={copyShareLink}>
           {shareStatus === "copied"
@@ -930,7 +1000,11 @@ export function Calculator() {
               : "Copy share link"}
         </button>
         <button type="button" className="reset-btn" onClick={resetAll}>
-          Reset to defaults
+          {editMode
+            ? "Reset canonical"
+            : hasLocalTweaks
+              ? "Discard local tweaks"
+              : "Reset to defaults"}
         </button>
       </div>
     </div>
