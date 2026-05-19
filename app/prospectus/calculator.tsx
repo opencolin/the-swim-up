@@ -161,20 +161,28 @@ function compute(i: Inputs) {
 
   const rentToRevenue = revenueMonthly > 0 ? netRent / revenueMonthly : 0;
 
-  // Break-even member count holding everything else equal
-  const fixedCosts =
-    totalCostMonthly -
-    dues -
-    initiationMonthly -
-    memberFbGmv * i.ourShareOfFB -
-    i.members * i.visitsPerMember * i.fbSpendPerVisit * 0; // already in GMV branch
+  // Break-even member count: how many members are required to cover total
+  // costs given the current non-member revenue and per-member contribution.
+  // Independent of the current member input — answers "how lean can we go?"
+  const nonMemberRev =
+    dayPassRev +
+    eventRevRetained +
+    aquaticRev +
+    (eventFbGmv + burgerWindowGmv) * i.ourShareOfFB;
+
   const memberContributionPerMember =
     i.monthlyDues +
     (i.annualChurn * i.initiationFee) / 12 +
     i.visitsPerMember * i.fbSpendPerVisit * i.ourShareOfFB;
+
   const breakEvenMembers =
     memberContributionPerMember > 0
-      ? Math.ceil(Math.max(0, fixedCosts / memberContributionPerMember))
+      ? Math.max(
+          0,
+          Math.ceil(
+            (totalCostMonthly - nonMemberRev) / memberContributionPerMember,
+          ),
+        )
       : 0;
 
   return {
