@@ -58,7 +58,7 @@ const DEFAULTS: Inputs = {
   includeGarage: true,
   subleaseFrontOffice: true,
   subleaseGarage: true,
-  subleasePool: false,
+  subleasePool: true,
   rentMain: 15000,
   rentFrontOffice: 2495,
   rentGarage: 2350,
