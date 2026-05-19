@@ -341,46 +341,92 @@ const SCENARIOS = {
 
 /* ---------- UI ---------- */
 
+type SyncStatus = "idle" | "loading" | "syncing" | "saved" | "offline";
+
 export function Calculator() {
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
   const [hydrated, setHydrated] = useState(false);
   const [shareStatus, setShareStatus] = useState<"idle" | "copied" | "err">(
     "idle",
   );
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>("loading");
+  const isFrozenScenario = useRef(false);
   const o: Output = useMemo(() => compute(inputs), [inputs]);
 
   function patch(p: Partial<Inputs>) {
     setInputs((s) => ({ ...s, ...p }));
   }
 
-  // Load saved state on mount: URL takes precedence over localStorage.
+  // Load saved state on mount:
+  //   1. URL ?s= takes precedence (frozen scenario, no cloud save)
+  //   2. Cloud (cross-device shared state)
+  //   3. localStorage (legacy fallback / migration)
+  //   4. Defaults
   useEffect(() => {
-    let loaded: Partial<Inputs> | null = null;
-    try {
-      const params = new URLSearchParams(window.location.search);
-      const s = params.get("s");
-      if (s) loaded = decodeState(s);
-    } catch {
-      // ignore
-    }
-    if (!loaded) {
+    let cancelled = false;
+
+    async function load() {
+      let urlState: Partial<Inputs> | null = null;
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const s = params.get("s");
+        if (s) urlState = decodeState(s);
+      } catch {
+        // ignore
+      }
+
+      if (urlState) {
+        // Frozen scenario — don't sync to cloud or overwrite the shared state.
+        isFrozenScenario.current = true;
+        if (!cancelled) {
+          setInputs((s) => ({ ...s, ...urlState! }));
+          setSyncStatus("idle");
+          setHydrated(true);
+        }
+        return;
+      }
+
+      // Try cloud
+      try {
+        const res = await fetch("/api/prospectus", { cache: "no-store" });
+        if (res.ok) {
+          const cloud = await res.json();
+          if (cloud && typeof cloud === "object" && !cancelled) {
+            setInputs((s) => ({ ...s, ...cloud }));
+            setSyncStatus("saved");
+            setHydrated(true);
+            return;
+          }
+        }
+      } catch {
+        // network error — fall through to localStorage
+      }
+
+      // Fall back to localStorage
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) {
+        if (raw && !cancelled) {
           const parsed = JSON.parse(raw);
           if (parsed && typeof parsed === "object") {
-            loaded = parsed as Partial<Inputs>;
+            setInputs((s) => ({ ...s, ...parsed }));
           }
         }
       } catch {
         // ignore
       }
+      if (!cancelled) {
+        setSyncStatus("idle");
+        setHydrated(true);
+      }
     }
-    if (loaded) setInputs((s) => ({ ...s, ...loaded }));
-    setHydrated(true);
+
+    load();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  // Save to localStorage on every change (cheap; no debounce needed).
+  // Cache to localStorage on every change (fast path; survives offline).
   useEffect(() => {
     if (!hydrated) return;
     try {
@@ -388,6 +434,29 @@ export function Calculator() {
     } catch {
       // ignore quota/privacy errors
     }
+  }, [inputs, hydrated]);
+
+  // Sync to cloud on every change (debounced). Skip in frozen-scenario mode.
+  const cloudTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!hydrated || isFrozenScenario.current) return;
+    if (cloudTimer.current) clearTimeout(cloudTimer.current);
+    cloudTimer.current = setTimeout(async () => {
+      setSyncStatus("syncing");
+      try {
+        const res = await fetch("/api/prospectus", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(inputs),
+        });
+        setSyncStatus(res.ok ? "saved" : "offline");
+      } catch {
+        setSyncStatus("offline");
+      }
+    }, 800);
+    return () => {
+      if (cloudTimer.current) clearTimeout(cloudTimer.current);
+    };
   }, [inputs, hydrated]);
 
   // Mirror state to the URL search param (debounced) so links are shareable.
@@ -428,6 +497,14 @@ export function Calculator() {
       localStorage.removeItem(STORAGE_KEY);
     } catch {
       // ignore
+    }
+    // Also clear cloud state by POSTing defaults
+    if (!isFrozenScenario.current) {
+      fetch("/api/prospectus", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(DEFAULTS),
+      }).catch(() => {});
     }
   }
 
@@ -830,10 +907,20 @@ export function Calculator() {
       </section>
 
       <div className="reset-row">
-        <span className="autosave-note">
-          {hydrated
-            ? "Changes save automatically · your tweaks persist across reloads"
-            : ""}
+        <span className={`autosave-note sync-${syncStatus}`}>
+          {!hydrated
+            ? ""
+            : isFrozenScenario.current
+              ? "Frozen scenario from share link · changes won't save"
+              : syncStatus === "loading"
+                ? "Loading saved state…"
+                : syncStatus === "syncing"
+                  ? "Syncing…"
+                  : syncStatus === "saved"
+                    ? "Saved · synced across devices"
+                    : syncStatus === "offline"
+                      ? "Offline · changes cached locally"
+                      : "Synced across devices"}
         </span>
         <button type="button" className="reset-btn" onClick={copyShareLink}>
           {shareStatus === "copied"

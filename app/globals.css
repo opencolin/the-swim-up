@@ -608,7 +608,23 @@ legend {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: rgba(10, 10, 10, 0.5);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
+.autosave-note::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.6;
+}
+.autosave-note.sync-syncing { color: var(--pool); }
+.autosave-note.sync-saved { color: #2d7a3d; }
+.autosave-note.sync-offline { color: #8a1a1a; }
+.autosave-note.sync-loading { color: rgba(10, 10, 10, 0.4); }
 .reset-btn {
   background: transparent;
   border: 1.5px solid var(--ink);
