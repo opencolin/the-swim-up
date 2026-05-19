@@ -95,6 +95,112 @@ const poolDeck: Item[] = [
   { name: "Frozen mango", price: "6", desc: "On a stick. Yes." },
 ];
 
+const windowFood: Item[] = [
+  {
+    name: "Window Burger",
+    price: "16",
+    desc: "Smash patty, cheddar, secret sauce, soft roll. Wrapped in paper, eats in five bites.",
+  },
+  {
+    name: "Crispy chicken sandwich",
+    price: "15",
+    desc: "Buttermilk, hot honey, pickles, brioche. Cuts cleanly with one hand.",
+  },
+  {
+    name: "Hummus wrap",
+    price: "12",
+    desc: "Charred flatbread, za'atar, cucumber, herbs.",
+  },
+  {
+    name: "Brussels chips",
+    price: "11",
+    desc: "Lemon, sea salt. Eats like a chip, hits like a fry.",
+  },
+  {
+    name: "Pool fries",
+    price: "8",
+    desc: "Sea salt, lemon mayo on the side.",
+  },
+  {
+    name: "Potato croquettes",
+    price: "10",
+    desc: "Mozzarella inside, ranch on the side.",
+  },
+  {
+    name: "Candied bacon",
+    price: "7",
+    desc: "Thick-cut, maple, brown sugar. Eat it like jerky.",
+  },
+  {
+    name: "Deviled egg",
+    price: "4",
+    desc: "Aged provolone, pickled jalapeño, bacon. One bite.",
+  },
+  {
+    name: "Lemon ricotta doughnuts",
+    price: "9",
+    desc: "Three, warm, blueberry on the side.",
+  },
+  {
+    name: "Chocolate-PB bites",
+    price: "8",
+    desc: "Guittard, salted peanuts. For the walk back.",
+  },
+];
+
+const windowDrinks: Item[] = [
+  {
+    name: "The Swim Up",
+    price: "16",
+    desc: "Tequila, grapefruit cordial, lime, soda. In a cup, in the pool.",
+  },
+  {
+    name: "Ranch Water",
+    price: "13",
+    desc: "Tequila, Topo Chico, lime. The platonic pool drink.",
+  },
+  {
+    name: "Spicy paloma",
+    price: "15",
+    desc: "Tequila, grapefruit, lime, jalapeño, salt rim.",
+  },
+  {
+    name: "Smokey paloma",
+    price: "15",
+    desc: "Mezcal swap. Sunset move.",
+  },
+  {
+    name: "Frozen mango margarita",
+    price: "14",
+    desc: "Slushie format, lime, Tajín rim.",
+  },
+  {
+    name: "Garden gin",
+    price: "14",
+    desc: "Gin, cucumber, serrano, cilantro, lime.",
+  },
+  {
+    name: "Aperol pop-up",
+    price: "13",
+    desc: "Aperol, prosecco, orange. Bigger cup, more ice.",
+  },
+  {
+    name: "Frozen daiquiri",
+    price: "13",
+    desc: "White rum, lime, sugar. The other slushie.",
+  },
+  {
+    name: "Athletic IPA · can",
+    price: "9",
+    desc: "Cold. Non-alcoholic.",
+  },
+  {
+    name: "House lemonade",
+    price: "7",
+    desc: "Real lemons, light sugar, mint.",
+  },
+];
+
 const dinner: Item[] = [
   { name: "Pasta of the day", price: "26", desc: "Ask. Made same day, with what's good." },
   { name: "Roast fish", price: "34", desc: "Brown butter, herbs, lemon." },
@@ -225,6 +331,23 @@ export default function MenuPage() {
           items={poolDeck}
           tone="pool"
           photo="/photo-pool-deck.jpg"
+        />
+
+        <MenuSection
+          eyebrow="From the window · to-go"
+          title="Pool Bar · Food"
+          intro="Grab-and-go from the bar window. Walks back to your lounger without a fork."
+          items={windowFood}
+          tone="chrome"
+        />
+
+        <MenuSection
+          eyebrow="From the window · in a cup"
+          title="Pool Bar · Drinks"
+          intro="In a cup, with a straw, lower-ABV, citrus-led. Made for sun."
+          items={windowDrinks}
+          tone="pool"
+          photo="/photo-pool.png"
         />
 
         <MenuSection
