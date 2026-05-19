@@ -61,7 +61,7 @@ export async function POST(req: Request) {
 
   try {
     await put(PATHNAME, JSON.stringify(body), {
-      access: "public",
+      access: "private",
       addRandomSuffix: false,
       allowOverwrite: true,
       contentType: "application/json",
