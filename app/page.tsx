@@ -5,13 +5,12 @@ export default function Home() {
     <>
       <div className="strip">
         <div className="pair">
-          <span>EST. MMXXVI</span>
+          <span>EST. 2026</span>
           <span>SAN FRANCISCO</span>
         </div>
         <div className="pair">
           <a href="#work">Work</a>
-          <a href="#eat">Eat</a>
-          <a href="#drink">Drink</a>
+          <a href="/menu">Menu</a>
           <a href="#swim">Swim</a>
           <a href="#inquire">Members</a>
         </div>

@@ -625,6 +625,173 @@ legend {
 .autosave-note.sync-saved { color: #2d7a3d; }
 .autosave-note.sync-offline { color: #8a1a1a; }
 .autosave-note.sync-loading { color: rgba(10, 10, 10, 0.4); }
+
+/* ---------- /menu ---------- */
+
+.menu-page {
+  background: var(--beige);
+  color: var(--ink);
+}
+
+.menu-head {
+  padding: 80px 8vw 64px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.menu-head .menu-eyebrow {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 12px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--pool);
+  display: inline-block;
+  margin-bottom: 24px;
+}
+.menu-title {
+  font-family: var(--font-anton), sans-serif;
+  font-size: clamp(48px, 8vw, 112px);
+  line-height: 0.94;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin-bottom: 28px;
+  max-width: 18ch;
+}
+.menu-title em {
+  color: var(--pool);
+  font-style: normal;
+}
+.menu-lede {
+  font-size: 18px;
+  line-height: 1.55;
+  max-width: 60ch;
+  margin-bottom: 14px;
+}
+.menu-caveat {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(10, 10, 10, 0.55);
+  max-width: 60ch;
+}
+
+.menu-section {
+  padding: 72px 8vw;
+  border-top: 3px solid var(--ink);
+}
+.menu-section.tone-cream { background: var(--cream); color: var(--ink); }
+.menu-section.tone-beige { background: var(--beige); color: var(--ink); }
+.menu-section.tone-pool { background: var(--pool); color: var(--cream); }
+.menu-section.tone-chrome { background: var(--chrome); color: var(--ink); }
+.menu-section.tone-teal { background: var(--teal); color: var(--cream); }
+
+.menu-section-head {
+  max-width: 1100px;
+  margin: 0 auto 40px;
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 32px;
+  align-items: baseline;
+}
+.menu-section-head .menu-eyebrow {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 12px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: currentColor;
+  opacity: 0.7;
+}
+.menu-section.tone-pool .menu-section-head .menu-eyebrow,
+.menu-section.tone-teal .menu-section-head .menu-eyebrow { color: var(--chrome); opacity: 1; }
+.menu-section.tone-chrome .menu-section-head .menu-eyebrow { color: var(--ink); opacity: 0.75; }
+
+.menu-section-title {
+  font-family: var(--font-anton), sans-serif;
+  font-size: clamp(36px, 5vw, 64px);
+  line-height: 0.95;
+  letter-spacing: -0.015em;
+  text-transform: uppercase;
+}
+.menu-section-intro {
+  grid-column: 2;
+  margin-top: 12px;
+  font-size: 16px;
+  line-height: 1.55;
+  font-style: italic;
+  opacity: 0.85;
+  max-width: 56ch;
+}
+
+.menu-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 auto;
+  max-width: 1100px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px 56px;
+}
+.menu-item { break-inside: avoid; }
+.menu-item-line {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 18px;
+}
+.menu-item-name {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.menu-item-dots {
+  flex: 1;
+  margin: 0 4px 5px;
+  border-bottom: 1px dotted currentColor;
+  opacity: 0.4;
+  min-width: 16px;
+}
+.menu-item-price {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 15px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.menu-item-desc {
+  margin-top: 4px;
+  font-size: 14px;
+  line-height: 1.45;
+  font-style: italic;
+  opacity: 0.78;
+  max-width: 44ch;
+}
+
+.menu-foot {
+  padding: 48px 8vw 80px;
+  max-width: 1100px;
+  margin: 0 auto;
+  border-top: 1px solid rgba(10, 10, 10, 0.15);
+  font-size: 14px;
+  color: rgba(10, 10, 10, 0.7);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.menu-foot strong { color: var(--ink); }
+.menu-foot .fine {
+  font-size: 12px;
+  color: rgba(10, 10, 10, 0.5);
+  max-width: 80ch;
+}
+
+@media (max-width: 880px) {
+  .menu-head { padding: 56px 6vw 40px; }
+  .menu-section { padding: 56px 6vw; }
+  .menu-section-head { grid-template-columns: 1fr; gap: 12px; }
+  .menu-section-intro { grid-column: 1; }
+  .menu-list { grid-template-columns: 1fr; gap: 24px; }
+  .menu-foot { padding: 40px 6vw 64px; }
+}
 .reset-btn {
   background: transparent;
   border: 1.5px solid var(--ink);
