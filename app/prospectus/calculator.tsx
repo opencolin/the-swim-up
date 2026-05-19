@@ -1,6 +1,32 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+
+const STORAGE_KEY = "swim-up-prospectus-v1";
+
+function diffFromDefaults(inputs: Inputs): Partial<Inputs> {
+  const diff: Record<string, unknown> = {};
+  for (const k of Object.keys(DEFAULTS) as (keyof Inputs)[]) {
+    if (inputs[k] !== DEFAULTS[k]) diff[k] = inputs[k];
+  }
+  return diff as Partial<Inputs>;
+}
+
+function encodeState(inputs: Inputs): string {
+  const diff = diffFromDefaults(inputs);
+  if (Object.keys(diff).length === 0) return "";
+  return encodeURIComponent(JSON.stringify(diff));
+}
+
+function decodeState(encoded: string): Partial<Inputs> | null {
+  try {
+    const parsed = JSON.parse(decodeURIComponent(encoded));
+    if (parsed && typeof parsed === "object") return parsed as Partial<Inputs>;
+  } catch {
+    // ignore
+  }
+  return null;
+}
 
 /* ---------- model ---------- */
 
@@ -317,10 +343,92 @@ const SCENARIOS = {
 
 export function Calculator() {
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
+  const [hydrated, setHydrated] = useState(false);
+  const [shareStatus, setShareStatus] = useState<"idle" | "copied" | "err">(
+    "idle",
+  );
   const o: Output = useMemo(() => compute(inputs), [inputs]);
 
   function patch(p: Partial<Inputs>) {
     setInputs((s) => ({ ...s, ...p }));
+  }
+
+  // Load saved state on mount: URL takes precedence over localStorage.
+  useEffect(() => {
+    let loaded: Partial<Inputs> | null = null;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const s = params.get("s");
+      if (s) loaded = decodeState(s);
+    } catch {
+      // ignore
+    }
+    if (!loaded) {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === "object") {
+            loaded = parsed as Partial<Inputs>;
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+    if (loaded) setInputs((s) => ({ ...s, ...loaded }));
+    setHydrated(true);
+  }, []);
+
+  // Save to localStorage on every change (cheap; no debounce needed).
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(inputs));
+    } catch {
+      // ignore quota/privacy errors
+    }
+  }, [inputs, hydrated]);
+
+  // Mirror state to the URL search param (debounced) so links are shareable.
+  const urlTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!hydrated) return;
+    if (urlTimer.current) clearTimeout(urlTimer.current);
+    urlTimer.current = setTimeout(() => {
+      try {
+        const encoded = encodeState(inputs);
+        const url = new URL(window.location.href);
+        if (encoded) url.searchParams.set("s", encoded);
+        else url.searchParams.delete("s");
+        window.history.replaceState(null, "", url.toString());
+      } catch {
+        // ignore
+      }
+    }, 500);
+    return () => {
+      if (urlTimer.current) clearTimeout(urlTimer.current);
+    };
+  }, [inputs, hydrated]);
+
+  async function copyShareLink() {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setShareStatus("copied");
+      setTimeout(() => setShareStatus("idle"), 1800);
+    } catch {
+      setShareStatus("err");
+      setTimeout(() => setShareStatus("idle"), 1800);
+    }
+  }
+
+  function resetAll() {
+    setInputs(DEFAULTS);
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // ignore
+    }
   }
 
   return (
@@ -722,11 +830,19 @@ export function Calculator() {
       </section>
 
       <div className="reset-row">
-        <button
-          type="button"
-          className="reset-btn"
-          onClick={() => setInputs(DEFAULTS)}
-        >
+        <span className="autosave-note">
+          {hydrated
+            ? "Changes save automatically · your tweaks persist across reloads"
+            : ""}
+        </span>
+        <button type="button" className="reset-btn" onClick={copyShareLink}>
+          {shareStatus === "copied"
+            ? "Link copied ✓"
+            : shareStatus === "err"
+              ? "Copy failed"
+              : "Copy share link"}
+        </button>
+        <button type="button" className="reset-btn" onClick={resetAll}>
           Reset to defaults
         </button>
       </div>

@@ -593,7 +593,22 @@ legend {
 .stat.ok .stat-value { color: var(--chrome); }
 .stat.bad .stat-value { color: #ff9e8a; }
 
-.reset-row { display: flex; justify-content: flex-end; margin-top: 8px; }
+.reset-row {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.autosave-note {
+  margin-right: auto;
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(10, 10, 10, 0.5);
+}
 .reset-btn {
   background: transparent;
   border: 1.5px solid var(--ink);
