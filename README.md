@@ -1,4 +1,4 @@
-# poolbar
+# The Swim Up
 
 A members' club where work meets water — heated pool, full kitchen, long bar, and the desk you actually want to sit at.
 

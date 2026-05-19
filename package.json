@@ -1,8 +1,8 @@
 {
-  "name": "poolbar",
+  "name": "the-swim-up",
   "version": "0.1.0",
   "private": true,
-  "description": "poolbar — a members' club where work meets water.",
+  "description": "The Swim Up — a members' club where work meets water.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

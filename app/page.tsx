@@ -55,7 +55,7 @@ export default function Home() {
           </svg>
         </div>
 
-        <span className="wordmark">POOLBAR</span>
+        <span className="wordmark">THE SWIM UP</span>
         <h1>
           POOL<span className="slash">/</span>BAR
           <span className="slash">/</span>
@@ -139,7 +139,7 @@ export default function Home() {
       </section>
 
       <footer className="footer">
-        <span className="mark">POOLBAR</span>
+        <span className="mark">THE SWIM UP</span>
         <span>Pool · Bar · Desk · 2026</span>
         <span>City · Always Heated</span>
       </footer>

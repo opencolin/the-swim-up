@@ -23,15 +23,16 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "poolbar — pool · bar · desk",
+  title: "The Swim Up — pool · bar · desk",
   description:
     "A members' club where work meets water. Heated pool, the kitchen open from breakfast to last call, and a desk to call your own.",
   openGraph: {
-    title: "poolbar — pool · bar · desk",
+    title: "The Swim Up — pool · bar · desk",
     description:
       "A members' club where work meets water. Heated pool, full kitchen, long bar, and the desk you actually want to sit at.",
     images: ["/photo-hero.jpg"],
     type: "website",
+    siteName: "The Swim Up",
   },
 };
 
