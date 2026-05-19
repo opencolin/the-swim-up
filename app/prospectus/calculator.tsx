@@ -375,21 +375,21 @@ export function Calculator() {
           <fieldset>
             <legend>Sublease income</legend>
             <Toggle
-              label="Front office to existing tenant"
+              label="Front office — find a tenant (potential)"
               checked={inputs.subleaseFrontOffice}
               onChange={(v) => patch({ subleaseFrontOffice: v })}
               disabled={!inputs.includeFrontOffice}
               note={"+" + usd(inputs.subleaseFrontOfficeRent) + "/mo"}
             />
             <Toggle
-              label="Garage to existing tenant"
+              label="Garage — existing tenant (lease ends Oct)"
               checked={inputs.subleaseGarage}
               onChange={(v) => patch({ subleaseGarage: v })}
               disabled={!inputs.includeGarage}
               note={"+" + usd(inputs.subleaseGarageRent) + "/mo"}
             />
             <Toggle
-              label="Pool — scuba off-peak"
+              label="Pool — scuba off-peak (pending)"
               checked={inputs.subleasePool}
               onChange={(v) => patch({ subleasePool: v })}
               note={"+" + usd(inputs.subleasePoolRent) + "/mo"}
