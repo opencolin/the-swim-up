@@ -357,7 +357,6 @@ export function Calculator() {
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
   const [hydrated, setHydrated] = useState(false);
   const [editMode, setEditMode] = useState(false);
-  const [hasLocalTweaks, setHasLocalTweaks] = useState(false);
   const [shareStatus, setShareStatus] = useState<"idle" | "copied" | "err">(
     "idle",
   );
@@ -370,15 +369,15 @@ export function Calculator() {
     setInputs((s) => ({ ...s, ...p }));
   }
 
-  // On mount: handle ?edit= token, then load state in priority order.
-  //   1. URL ?s= → frozen scenario (read-only display, no cloud or local save)
-  //   2. In edit mode → cloud canonical; changes write to cloud
-  //   3. In view mode → cloud canonical, overlaid with local visitor snapshot
+  // On mount:
+  //   1. Capture and store ?edit=TOKEN if present (then strip from URL).
+  //   2. If ?s= present, render as a one-off frozen scenario (no save).
+  //   3. Otherwise fetch the canonical state from the cloud.
+  // Visitor tweaks are never persisted; refresh reverts to canonical.
   useEffect(() => {
     let cancelled = false;
 
     async function load() {
-      // Capture ?edit=TOKEN, store it, strip from URL so it doesn't get shared
       try {
         const url = new URL(window.location.href);
         const editParam = url.searchParams.get("edit");
@@ -398,7 +397,6 @@ export function Calculator() {
       const tokenPresent = !!readEditToken();
       if (!cancelled) setEditMode(tokenPresent);
 
-      // Check ?s= frozen scenario — takes precedence over everything
       let urlState: Partial<Inputs> | null = null;
       try {
         const params = new URLSearchParams(window.location.search);
@@ -418,7 +416,6 @@ export function Calculator() {
         return;
       }
 
-      // Fetch canonical from cloud
       let canonical: Partial<Inputs> | null = null;
       try {
         const res = await fetch("/api/prospectus", { cache: "no-store" });
@@ -429,40 +426,16 @@ export function Calculator() {
           }
         }
       } catch {
-        // network error — canonical stays null, we'll fall back to defaults
+        // network error — canonical stays null, fall back to DEFAULTS
       }
       canonicalRef.current = canonical;
 
-      if (tokenPresent) {
-        // Edit mode: canonical is what we display. No local overlay.
-        if (canonical && !cancelled) {
+      if (!cancelled) {
+        if (canonical) {
           setInputs((s) => ({ ...s, ...canonical! }));
         }
-        if (!cancelled) {
-          setSyncStatus(canonical ? "saved" : "idle");
-          setHydrated(true);
-        }
-      } else {
-        // View mode: canonical as base, overlaid with this visitor's snapshot.
-        let visitor: Partial<Inputs> | null = null;
-        try {
-          const raw = localStorage.getItem(STORAGE_KEY);
-          if (raw) {
-            const parsed = JSON.parse(raw);
-            if (parsed && typeof parsed === "object") {
-              visitor = parsed as Partial<Inputs>;
-            }
-          }
-        } catch {
-          // ignore
-        }
-        if (!cancelled) {
-          const merged: Partial<Inputs> = { ...(canonical ?? {}), ...(visitor ?? {}) };
-          setInputs((s) => ({ ...s, ...merged }));
-          setHasLocalTweaks(!!visitor);
-          setSyncStatus("idle");
-          setHydrated(true);
-        }
+        setSyncStatus(tokenPresent ? (canonical ? "saved" : "idle") : "idle");
+        setHydrated(true);
       }
     }
 
@@ -472,54 +445,42 @@ export function Calculator() {
     };
   }, []);
 
-  // Save on change. Behavior depends on mode.
+  // Cloud save: only in edit mode. View-mode tweaks are transient.
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    if (!hydrated || isFrozenScenario.current) return;
+    if (!hydrated || isFrozenScenario.current || !editMode) return;
     if (saveTimer.current) clearTimeout(saveTimer.current);
 
-    if (editMode) {
-      // Edit mode: debounced POST to cloud
-      saveTimer.current = setTimeout(async () => {
-        setSyncStatus("syncing");
-        const token = readEditToken();
-        try {
-          const res = await fetch("/api/prospectus", {
-            method: "POST",
-            headers: {
-              "content-type": "application/json",
-              "x-edit-token": token || "",
-            },
-            body: JSON.stringify(inputs),
-          });
-          if (res.status === 403) {
-            // Token rejected — drop it, downgrade to view mode
-            try {
-              localStorage.removeItem(EDIT_TOKEN_KEY);
-            } catch {
-              // ignore
-            }
-            setEditMode(false);
-            setSyncStatus("offline");
-          } else {
-            setSyncStatus(res.ok ? "saved" : "offline");
+    saveTimer.current = setTimeout(async () => {
+      setSyncStatus("syncing");
+      const token = readEditToken();
+      try {
+        const res = await fetch("/api/prospectus", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-edit-token": token || "",
+          },
+          body: JSON.stringify(inputs),
+        });
+        if (res.status === 403) {
+          try {
+            localStorage.removeItem(EDIT_TOKEN_KEY);
+          } catch {
+            // ignore
           }
-        } catch {
+          setEditMode(false);
           setSyncStatus("offline");
-        }
-      }, 800);
-    } else {
-      // View mode: save to localStorage as visitor's per-browser snapshot
-      saveTimer.current = setTimeout(() => {
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(inputs));
-          setHasLocalTweaks(true);
+        } else if (res.ok) {
+          canonicalRef.current = inputs;
           setSyncStatus("saved");
-        } catch {
+        } else {
           setSyncStatus("offline");
         }
-      }, 300);
-    }
+      } catch {
+        setSyncStatus("offline");
+      }
+    }, 800);
 
     return () => {
       if (saveTimer.current) clearTimeout(saveTimer.current);
@@ -550,7 +511,6 @@ export function Calculator() {
       return;
     }
     if (editMode) {
-      // Push DEFAULTS as the new canonical
       setInputs(DEFAULTS);
       const token = readEditToken();
       try {
@@ -562,17 +522,12 @@ export function Calculator() {
           },
           body: JSON.stringify(DEFAULTS),
         });
+        canonicalRef.current = DEFAULTS;
       } catch {
         // ignore
       }
     } else {
-      // View mode: drop visitor's local snapshot, revert to canonical
-      try {
-        localStorage.removeItem(STORAGE_KEY);
-      } catch {
-        // ignore
-      }
-      setHasLocalTweaks(false);
+      // View mode: revert to canonical (drop any in-session tweaks)
       const canonical = canonicalRef.current;
       setInputs({ ...DEFAULTS, ...(canonical ?? {}) });
     }
@@ -981,16 +936,14 @@ export function Calculator() {
           {!hydrated
             ? ""
             : isFrozenScenario.current
-              ? "Frozen scenario from share link · tweaks won't save"
+              ? "Frozen scenario from share link"
               : editMode
                 ? syncStatus === "syncing"
-                  ? "Editing canonical · syncing…"
+                  ? "Editing · syncing…"
                   : syncStatus === "offline"
-                    ? "Editing canonical · offline (will retry)"
-                    : "Editing canonical · saved across your devices"
-                : hasLocalTweaks
-                  ? "Tweaking locally · the published model is unchanged"
-                  : "Showing the published numbers"}
+                    ? "Editing · offline (will retry)"
+                    : "Editing · saved for everyone"
+                : ""}
         </span>
         <button type="button" className="reset-btn" onClick={copyShareLink}>
           {shareStatus === "copied"
@@ -1000,11 +953,7 @@ export function Calculator() {
               : "Copy share link"}
         </button>
         <button type="button" className="reset-btn" onClick={resetAll}>
-          {editMode
-            ? "Reset canonical"
-            : hasLocalTweaks
-              ? "Discard local tweaks"
-              : "Reset to defaults"}
+          {editMode ? "Reset canonical" : "Reset"}
         </button>
       </div>
     </div>
