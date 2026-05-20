@@ -141,18 +141,6 @@ export default function Home() {
           </h2>
         </header>
         <div className="space-grid">
-          <figure className="space-photo big">
-            <div
-              className="space-photo-img"
-              style={{ backgroundImage: "url('/photo-storefront.png')" }}
-              aria-hidden="true"
-            />
-            <figcaption>
-              <span className="cap-num">01</span>
-              <span className="cap-name">The Front Door</span>
-              <span className="cap-meta">584 4th St · San Francisco</span>
-            </figcaption>
-          </figure>
           <figure className="space-photo">
             <div
               className="space-photo-img"
@@ -160,7 +148,7 @@ export default function Home() {
               aria-hidden="true"
             />
             <figcaption>
-              <span className="cap-num">02</span>
+              <span className="cap-num">01</span>
               <span className="cap-name">The Pool</span>
               <span className="cap-meta">Heated · 25m · Year-round</span>
             </figcaption>
@@ -172,9 +160,21 @@ export default function Home() {
               aria-hidden="true"
             />
             <figcaption>
-              <span className="cap-num">03</span>
+              <span className="cap-num">02</span>
               <span className="cap-name">The Library</span>
               <span className="cap-meta">Long desks · Quiet hours</span>
+            </figcaption>
+          </figure>
+          <figure className="space-photo">
+            <div
+              className="space-photo-img"
+              style={{ backgroundImage: "url('/photo-work-longtable.png')" }}
+              aria-hidden="true"
+            />
+            <figcaption>
+              <span className="cap-num">03</span>
+              <span className="cap-name">The Long Table</span>
+              <span className="cap-meta">Shared · Open · Always set</span>
             </figcaption>
           </figure>
           <figure className="space-photo">
@@ -187,6 +187,30 @@ export default function Home() {
               <span className="cap-num">04</span>
               <span className="cap-name">The Floor</span>
               <span className="cap-meta">Hot desks · Phone rooms</span>
+            </figcaption>
+          </figure>
+          <figure className="space-photo">
+            <div
+              className="space-photo-img"
+              style={{ backgroundImage: "url('/photo-garage.png')" }}
+              aria-hidden="true"
+            />
+            <figcaption>
+              <span className="cap-num">05</span>
+              <span className="cap-name">The Garage</span>
+              <span className="cap-meta">Three moto spots · Covered</span>
+            </figcaption>
+          </figure>
+          <figure className="space-photo">
+            <div
+              className="space-photo-img"
+              style={{ backgroundImage: "url('/photo-storefront.png')" }}
+              aria-hidden="true"
+            />
+            <figcaption>
+              <span className="cap-num">06</span>
+              <span className="cap-name">The Front Door</span>
+              <span className="cap-meta">584 4th St · San Francisco</span>
             </figcaption>
           </figure>
         </div>
